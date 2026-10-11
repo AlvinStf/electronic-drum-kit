@@ -1,0 +1,534 @@
+/*
+  ESP32-S3 USB MIDI Electronic Drum
+  ---------------------------------
+  USB MIDI:
+    ESP32-S3 Native USB OTG
+
+  Required:
+    - ESP32 Arduino Core 3.x
+    - HelloDrum library
+
+  Arduino IDE:
+    Tools -> USB Mode -> USB-OTG (TinyUSB)
+*/
+
+#include <Arduino.h>
+#include "USB.h"
+#include "USBMIDI.h"
+#include <hellodrum.h>
+
+// SETTINGS
+
+byte HIGHTOM[6] = {
+  100,  // sensitivity (1-100)
+  10,   // threshold (1-100)
+  10,   // scan time
+  30,   // mask time
+  50,   // MIDI note
+  1     // curve type (0-4)
+};
+
+byte HIMIDTOM[6] = {
+  100,  // sensitivity (1-100)
+  10,   // threshold (1-100)
+  10,   // scan time
+  30,   // mask time
+  48,   // MIDI note
+  1     // curve type (0-4)
+};
+
+byte FLOORTOM[6] = {
+  100,  // sensitivity (1-100)
+  10,   // threshold (1-100)
+  10,   // scan time
+  30,   // mask time
+  41,   // MIDI note
+  1     // curve type (0-4)
+};
+
+byte SNARE[10] = {
+  100, //sensitivity (1-100)
+  10,  //threshold (1-100)
+  30,  //scan time (1-100)
+  10,  //mask time (1-100)
+  10,  //rim sensitivity (1-100)
+  3,   //rim threshold (1-100)
+  1,   //curve type (0-4)
+  38,  //note (0-127)
+  40,  //note of rim shot (0-127)
+  37   //note of cross stick (0-127)
+};
+
+byte HIHAT[7] = {
+  100, //sensitivity
+  10,  //threshold
+  10,  //scan start
+  30,  //scan end
+  0,   //curve type
+  46,  //note of open
+  42,  //note of close
+};
+
+byte HIHAT_PEDAL[7] = {
+  75, //sensitivity (Hold the pedal at the position where you want to send 127(full open) in the MIDI CC, and read the Analog Read value in the TCRT5000. Divide the value by 10 and enter the value.)
+  35, //threshold (Hold the pedal at the position where you want to send 0(close) in the MIDI CC, and read the Analog Read value in the TCRT5000. Divide the value by 10 and enter the value.)
+  45, //scan start (When the analogRead value reaches this value * 10, the scan will start and the time will be recorded.)
+  52, //scan end (When the analogRead value reaches this value * 10, the scan is finished and the time taken for the scan is referenced to determine the velocity.Then noteOn will be sent.The default value is 90, the same as Sensitivity. This means that the pedal is closed at the point where MIDI CC is 127.)
+  10, //pedal sensitivity (This value multiplied by 100 is the time used to determine the velocity of the pedal. If the time taken from the scan start position to the scan end position is more than 1000 milliseconds, the velocity will be set to 1. So, if you feel that the velocity is low, either increase pedalSensitivity or increase the value of scan start.)
+  0,  //curve type
+  44  //note of pedal
+};
+
+byte CRASH[10] = {
+  100, //sensitivity
+  10,  //threshold
+  10,  //scan time
+  30,  //mask time
+  4,   //edge threshold
+  5,   //cup threshold
+  1,   //curve type(0-4)
+  49,  //note of bow
+  55,  //note of edge
+  53   //note of cup
+};
+
+byte RIDE[10] = {
+  100, //sensitivity
+  10,  //threshold
+  10,  //scan time
+  30,  //mask time
+  4,   //edge threshold
+  5,   //cup threshold
+  1,   //curve type(0-4)
+  51,  //note of bow
+  59,  //note of edge
+  53   //note of cup
+};
+
+byte KICK[6] = {
+  100,  // sensitivity (1-100)
+  10,   // threshold (1-100)
+  10,   // scan time
+  30,   // mask time
+  35,   // MIDI note
+  1     // curve type (0-4)
+};
+
+// Change the USB MIDI device name
+SET_USB_MIDI_DEVICE_NAME("ESP32-S3 Drum");
+
+USBMIDI MIDI;
+
+HelloDrum highTom(4);
+HelloDrum highMidTom(5);
+HelloDrum floorTom(6);
+HelloDrum snare(7, 8);
+HelloDrum hihat(1);
+HelloDrum hihatPedal(2);
+HelloDrum crash(3, 13);
+HelloDrum ride(9, 14);
+HelloDrum kick(10);
+
+void setup()
+{
+  // Start USB MIDI
+  MIDI.begin();
+  USB.begin();
+
+  // Set curve type
+  highTom.setCurve(HIGHTOM[5]);
+  highMidTom.setCurve(HIMIDTOM[5]);
+  floorTom.setCurve(FLOORTOM[5]);
+  snare.setCurve(SNARE[6]);
+  hihat.setCurve(HIHAT[4]);
+  hihatPedal.setCurve(HIHAT_PEDAL[5]);
+  crash.setCurve(CRASH[6]);
+  ride.setCurve(RIDE[6]);
+  kick.setCurve(KICK[5]);
+}
+
+void loop()
+{
+  // Read piezo
+
+  highTom.singlePiezo(
+    HIGHTOM[0],
+    HIGHTOM[1],
+    HIGHTOM[2],
+    HIGHTOM[3]
+  );
+
+  highMidTom.singlePiezo(
+    HIMIDTOM[0],
+    HIMIDTOM[1],
+    HIMIDTOM[2],
+    HIMIDTOM[3]
+  );
+
+  floorTom.singlePiezo(
+    FLOORTOM[0],
+    FLOORTOM[1],
+    FLOORTOM[2],
+    FLOORTOM[3]
+  );
+
+  snare.dualPiezo(
+    SNARE[0],
+    SNARE[1],
+    SNARE[2],
+    SNARE[3],
+    SNARE[4],
+    SNARE[5]
+  );
+
+  hihat.HH(
+    HIHAT[0],
+    HIHAT[1],
+    HIHAT[2],
+    HIHAT[3]
+  );
+
+  hihatPedal.hihatControl(
+    HIHAT_PEDAL[0],
+    HIHAT_PEDAL[1],
+    HIHAT_PEDAL[2],
+    HIHAT_PEDAL[3],
+    HIHAT_PEDAL[4]
+  );
+
+  crash.cymbal3zone(
+    CRASH[0],
+    CRASH[1],
+    CRASH[2],
+    CRASH[3],
+    CRASH[4],
+    CRASH[5]
+  );
+
+  ride.cymbal3zone(
+    RIDE[0],
+    RIDE[1],
+    RIDE[2],
+    RIDE[3],
+    RIDE[4],
+    RIDE[5]
+  );
+
+  kick.singlePiezo(
+    KICK[0],
+    KICK[1],
+    KICK[2],
+    KICK[3]
+  );
+
+  // ---------------------------------------------------
+  // HIGH TOM HIT
+
+  if (highTom.hit == true)
+  {
+    MIDI.noteOn(
+      HIGHTOM[4],         // MIDI note
+      highTom.velocity,   // velocity 1-127
+      10              // MIDI channel
+    );
+
+    MIDI.noteOff(
+      HIGHTOM[4],
+      0,
+      10
+    );
+  }
+
+  // ---------------------------------------------------
+  // HI-MID TOM HIT
+
+  if (highMidTom.hit == true)
+  {
+    MIDI.noteOn(
+      HIMIDTOM[4],         // MIDI note
+      highMidTom.velocity,   // velocity 1-127
+      10              // MIDI channel
+    );
+
+    MIDI.noteOff(
+      HIMIDTOM[4],
+      0,
+      10
+    );
+  }
+
+  // ---------------------------------------------------
+  // FLOOR TOM HIT
+
+  if (floorTom.hit == true)
+  {
+    MIDI.noteOn(
+      FLOORTOM[4],         // MIDI note
+      floorTom.velocity,   // velocity 1-127
+      10              // MIDI channel
+    );
+
+    MIDI.noteOff(
+      FLOORTOM[4],
+      0,
+      10
+    );
+  }
+
+  // ---------------------------------------------------
+  // SNARE HIT
+
+  // HEAD
+  if (snare.hit == true)
+  {
+    MIDI.noteOn(
+      SNARE[7],       // MIDI note
+      snare.velocity, // velocity 1-127
+      10              // MIDI channel
+    );
+
+    MIDI.noteOff(
+      SNARE[7],
+      0,
+      10
+    );
+  }
+
+  //RIM
+  else if (snare.hitRim == true)
+  {
+    if (snare.velocity > 60)
+    {
+      MIDI.noteOn(
+        SNARE[8],
+        snare.velocity,
+        10
+      );
+
+      MIDI.noteOff(
+        SNARE[8],
+        0,
+        10
+      );
+    }
+    else
+    {
+      MIDI.noteOn(
+        SNARE[9],
+        snare.velocity * 2,
+        10
+      );
+
+      MIDI.noteOff(
+        SNARE[9],
+        0,
+        10
+      );
+    }
+  }
+
+  // ---------------------------------------------------
+  // HIHAT HIT
+
+  if (hihat.hit == true)
+  {
+    //check open or close
+    //1.open
+    if (hihatPedal.openHH == true)
+    {
+      MIDI.noteOn(
+        HIHAT[5],
+        hihat.velocity,
+        10
+      ); //(note, velocity, channel)
+
+      MIDI.noteOff(
+        HIHAT[5],
+        0,
+        10
+      );
+    }
+
+    //2.close
+    else if (hihatPedal.closeHH == true)
+    {
+      MIDI.noteOn(
+        HIHAT[6],
+        hihat.velocity,
+        10
+      );
+
+      MIDI.noteOff(
+        HIHAT[6],
+        0,
+        10
+      );
+    }
+  }
+
+  //when pedal is closed
+  if (hihatPedal.hit == true)
+  {
+    MIDI.noteOn(
+      HIHAT_PEDAL[6],
+      hihatPedal.velocity,
+      10
+    );
+
+    MIDI.noteOff(
+      HIHAT_PEDAL[6],
+      0,
+      10
+    );
+  }
+
+  //sending state of pedal with controll change
+  if (hihatPedal.moving == true)
+  {
+    MIDI.controlChange(
+      4,
+      hihatPedal.pedalCC,
+      10
+    );
+  }
+
+  // ---------------------------------------------------
+  // CRASH HIT
+
+  //BOW
+  if (crash.hit == true)
+  {
+    MIDI.noteOn(
+      CRASH[7],
+      crash.velocity,
+      10
+    );
+
+    MIDI.noteOff(
+      CRASH[7],
+      0,
+      10
+    );
+  }
+
+  //EDGE
+  else if (crash.hitRim == true)
+  {
+    MIDI.noteOn(
+      CRASH[8],
+      crash.velocity,
+      10
+    );
+
+    MIDI.noteOff(
+      CRASH[8],
+      0,
+      10
+    );
+  }
+
+  //CUP
+  else if (crash.hitCup == true)
+  {
+    MIDI.noteOn(
+      CRASH[9],
+      crash.velocity,
+      10
+    );
+    MIDI.noteOff(
+      CRASH[9],
+      0,
+      10
+    );
+  }
+
+  //CHOKE
+  if (crash.choke == true)
+  {
+    MIDI.polyPressure(CRASH[7], 127, 10);
+    MIDI.polyPressure(CRASH[8], 127, 10);
+    MIDI.polyPressure(CRASH[9], 127, 10);
+    MIDI.polyPressure(CRASH[7], 0, 10);
+    MIDI.polyPressure(CRASH[8], 0, 10);
+    MIDI.polyPressure(CRASH[9], 0, 10);
+  }
+
+  // ---------------------------------------------------
+  // RIDE HIT
+
+  //BOW
+  if (ride.hit == true)
+  {
+    MIDI.noteOn(
+      RIDE[7],
+      ride.velocity,
+      10
+    );
+
+    MIDI.noteOff(
+      RIDE[7],
+      0,
+      10
+    );
+  }
+
+  //EDGE
+  else if (ride.hitRim == true)
+  {
+    MIDI.noteOn(
+      RIDE[8],
+      ride.velocity,
+      10
+    );
+
+    MIDI.noteOff(
+      RIDE[8],
+      0,
+      10
+    );
+  }
+
+  //CUP
+  else if (ride.hitCup == true)
+  {
+    MIDI.noteOn(
+      RIDE[9],
+      ride.velocity,
+      10
+    );
+    MIDI.noteOff(
+      RIDE[9],
+      0,
+      10
+    );
+  }
+
+  //CHOKE
+  if (ride.choke == true)
+  {
+    MIDI.polyPressure(RIDE[7], 127, 10);
+    MIDI.polyPressure(RIDE[8], 127, 10);
+    MIDI.polyPressure(RIDE[9], 127, 10);
+    MIDI.polyPressure(RIDE[7], 0, 10);
+    MIDI.polyPressure(RIDE[8], 0, 10);
+    MIDI.polyPressure(RIDE[9], 0, 10);
+  }
+
+  // ---------------------------------------------------
+  // KICK HIT
+
+  if (kick.hit == true)
+  {
+    MIDI.noteOn(
+      KICK[4],         // MIDI note
+      kick.velocity,   // velocity 1-127
+      10              // MIDI channel
+    );
+
+    MIDI.noteOff(
+      KICK[4],
+      0,
+      10
+    );
+  }
+}

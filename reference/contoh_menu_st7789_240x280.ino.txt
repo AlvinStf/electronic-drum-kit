@@ -1,0 +1,177 @@
+/*
+  Contoh pemakaian Adafruit_ST7789_MenuLib pada LCD ST7789 1.69" 240x280.
+  Navigasi 3 tombol (UP / DOWN / SELECT), tanpa touch.
+
+  Wiring contoh untuk ESP32 (SPI hardware VSPI):
+    LCD SCL/SCK -> GPIO18
+    LCD SDA/MOSI-> GPIO23
+    LCD CS      -> GPIO5
+    LCD DC      -> GPIO2
+    LCD RES     -> GPIO4
+    LCD BLK     -> 3V3 (atau ke pin PWM untuk atur brightness)
+    LCD VCC     -> 3V3, GND -> GND
+
+  Tombol ke GND, pakai INPUT_PULLUP.
+*/
+
+#include <Adafruit_GFX.h>
+#include <Adafruit_ST7789.h>
+#include <SPI.h>
+#include "Adafruit_ST7789_MenuLib.h"
+
+// font GFX bawaan Adafruit_GFX
+#include <Fonts/FreeSans9pt7b.h>
+#include <Fonts/FreeSansBold9pt7b.h>
+
+#define TFT_CS   39
+#define TFT_DC   40
+#define TFT_RST  41
+
+#define BTN_UP     48
+#define BTN_SELECT 45
+#define BTN_DOWN   0
+
+Adafruit_ST7789 Display = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
+
+// false = tanpa touch
+ItemMenu MainMenu(&Display, false);
+EditMenu SetupMenu(&Display, false);
+
+// ID menu utama
+int mi_setup, mi_run, mi_about;
+
+// ID menu edit
+int ei_speed, ei_gain, ei_mode;
+
+const char *ModeText[] = {"Off", "Auto", "Manual"};
+
+// ---- warna (nama ST77XX_) ----
+#define C_BG        ST77XX_BLACK
+#define C_TEXT      ST77XX_WHITE
+#define C_HL_TEXT   ST77XX_BLACK
+#define C_HL_BAR    ST77XX_CYAN
+#define C_SEL_TEXT  ST77XX_BLACK
+#define C_SEL_BAR   ST77XX_YELLOW
+#define C_TITLE_TXT ST77XX_WHITE
+#define C_TITLE_BAR 0x001F   // biru
+
+void setup() {
+
+  pinMode(BTN_UP, INPUT_PULLUP);
+  pinMode(BTN_DOWN, INPUT_PULLUP);
+  pinMode(BTN_SELECT, INPUT_PULLUP);
+
+  // PENTING: 240x280 supaya offset panel 1.69" ditangani library
+  Display.init(240, 280);
+  Display.setRotation(3);          // portrait 240 (W) x 280 (H)
+  Display.fillScreen(C_BG);
+
+  // ---------- Menu utama ----------
+  // ItemRowHeight 30, MaxRow 6  -> 40 (title) + 5 (margin) + 6*30 = 225 px, muat di 280
+  MainMenu.init(C_TEXT, C_BG, C_HL_TEXT, C_HL_BAR,
+                30, 6, "SETTINGS", FreeSans9pt7b, FreeSansBold9pt7b);
+
+  MainMenu.setTitleBarSize(0, 0, 280, 40);
+  MainMenu.setTitleTextMargins(100, 27);       // toy = baseline teks judul
+  MainMenu.setMenuBarMargins(6, 274, 6, 2);   // kiri 6, lebar total 234, radius 6, tebal border 2
+  MainMenu.setItemTextMargins(8, 21, 5);
+  MainMenu.setItemColors(MENU_C_DKGREY, ST77XX_WHITE);
+
+  mi_setup = MainMenu.addNI("Output");
+  mi_run   = MainMenu.addNI("Sensitivity");
+  mi_about = MainMenu.addNI("About");
+
+  // ---------- Menu edit ----------
+  // MenuColumn = 150 -> kolom nilai mulai di x=150 (dari lebar 240)
+  SetupMenu.init(C_TEXT, C_BG, C_HL_TEXT, C_HL_BAR, C_SEL_TEXT, C_SEL_BAR,
+                 150, 30, 6, "Setup", FreeSans9pt7b, FreeSansBold9pt7b);
+
+  SetupMenu.setTitleBarSize(0, 0, 280, 40);
+  SetupMenu.setTitleTextMargins(100, 27);
+  SetupMenu.setMenuBarMargins(6, 274, 6, 2);
+  SetupMenu.setItemTextMargins(8, 21, 5);
+  SetupMenu.setItemColors(MENU_C_DKGREY, ST77XX_WHITE, ST77XX_ORANGE);
+
+  ei_speed = SetupMenu.addNI("Speed", 50, 0, 100, 5, 0);
+  ei_gain  = SetupMenu.addNI("Gain", 1.5, 0.0, 10.0, 0.1, 1);
+  ei_mode  = SetupMenu.addNI("Mode", 0, 0, 3, 1, 0, ModeText);
+
+  MainMenu.draw();
+}
+
+void loop() {
+  MainMenuLoop();
+}
+
+void MainMenuLoop() {
+
+  int id = 0;
+
+  MainMenu.draw();
+
+  while (true) {
+
+    if (buttonPressed(BTN_UP))   MainMenu.MoveUp();
+    if (buttonPressed(BTN_DOWN)) MainMenu.MoveDown();
+
+    if (buttonPressed(BTN_SELECT)) {
+      id = MainMenu.selectRow();
+
+      if (id == 0) {
+        // "Exit" dipilih, kembali (di sini cukup gambar ulang)
+        MainMenu.draw();
+      }
+      else if (id == mi_setup) {
+        Display.fillScreen(C_BG);
+        SetupMenuLoop();
+        Display.fillScreen(C_BG);
+        MainMenu.draw();
+      }
+      else if (id == mi_run) {
+        // kode Anda di sini
+      }
+      else if (id == mi_about) {
+        // kode Anda di sini
+      }
+    }
+    delay(10);
+  }
+}
+
+void SetupMenuLoop() {
+
+  int id = 0;
+
+  SetupMenu.draw();
+
+  while (true) {
+
+    if (buttonPressed(BTN_UP))   SetupMenu.MoveUp();
+    if (buttonPressed(BTN_DOWN)) SetupMenu.MoveDown();
+
+    if (buttonPressed(BTN_SELECT)) {
+      id = SetupMenu.selectRow();
+      if (id == 0) {
+        // keluar dari menu setup, simpan nilai
+        float speed = SetupMenu.value[ei_speed];
+        float gain  = SetupMenu.value[ei_gain];
+        int   mode  = (int) SetupMenu.value[ei_mode];
+        (void) speed; (void) gain; (void) mode;
+        return;
+      }
+    }
+    delay(10);
+  }
+}
+
+// debounce sederhana
+bool buttonPressed(uint8_t pin) {
+  if (digitalRead(pin) == LOW) {
+    delay(30);
+    if (digitalRead(pin) == LOW) {
+      while (digitalRead(pin) == LOW) delay(5);
+      return true;
+    }
+  }
+  return false;
+}

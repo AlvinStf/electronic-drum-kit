@@ -1,0 +1,15 @@
+Source preservation: all 45 MIDI calls, 9 tuning arrays, 9 pad constructors unchanged
+Custom hellodrum.cpp: SHA-256 identical to supplied file; 16 local-audio routes added
+WavData.h unchanged; no TFT calls, new delay, or wait-for-button loop in sensing loop
+WAV-to-header validator: valid PCM, truncated inputs, float and rate mismatch PASS
+Real WAV rapid-hit simulation: hits=16 peak=7 clips=0
+Engine/volume: 4386 assertions PASS; 10000 parser mutations completed
+MIDI integration HOST STUB test: 4096 randomized states + all 127 snare velocities
+140144 assertions PASS; original MIDI messages, scan arguments, and pad pins preserved
+Missing WAV / audio fault / full queue / pot endpoint / partial-write cases PASS
+Not a native ESP32 build; stubs do not model ADC, USB enumeration, DMA, or scheduling timing.
+Settings/menu HOST test: 77276 assertions PASS
+All parameter byte values, CRC bit corruptions, debounce/long press/rollover PASS
+Draft/apply/cancel, runtime note+curve, output trim/mute/velocity, save/reload/failure PASS
+20,000 randomized menu events across 240x280 and 280x240; dirty-row geometry PASS
+Graphics are mocked: no real font rasterization, screen appearance, or SPI timing tested.

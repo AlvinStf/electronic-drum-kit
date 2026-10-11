@@ -1,0 +1,57 @@
+TEST RESULTS - DrumMIDI + PCM5102 + ST7789
+Date: 2026-10-11
+
+Scope: HOST C++ tests using Arduino/FreeRTOS/USB/SPI/GFX/Preferences stubs.
+Not an Arduino/ESP32 firmware build. Not a physical-board test.
+Compiler: g++ (Debian 14.2.0-19) 14.2.0
+C++17, -Wall -Wextra -Werror, AddressSanitizer and UndefinedBehaviorSanitizer.
+Command: bash tests/run_tests.sh
+Exit code: 0
+
+Source preservation: all 45 MIDI calls, 9 tuning arrays, 9 pad constructors unchanged
+Custom hellodrum.cpp: SHA-256 identical to supplied file; 16 local-audio routes added
+WavData.h unchanged; no TFT calls, new delay, or wait-for-button loop in sensing loop
+WAV-to-header validator: valid PCM, truncated inputs, float and rate mismatch PASS
+Real WAV rapid-hit simulation: hits=16 peak=7 clips=0
+Engine/volume: 4386 assertions PASS; 10000 parser mutations completed
+MIDI integration HOST STUB test: 4096 randomized states + all 127 snare velocities
+140144 assertions PASS; original MIDI messages, scan arguments, and pad pins preserved
+Missing WAV / audio fault / full queue / pot endpoint / partial-write cases PASS
+Not a native ESP32 build; stubs do not model ADC, USB enumeration, DMA, or scheduling timing.
+Settings/menu HOST test: 77276 assertions PASS
+All parameter byte values, CRC bit corruptions, debounce/long press/rollover PASS
+Draft/apply/cancel, runtime note+curve, output trim/mute/velocity, save/reload/failure PASS
+20,000 randomized menu events across 240x280 and 280x240; dirty-row geometry PASS
+Graphics are mocked: no real font rasterization, screen appearance, or SPI timing tested.
+
+Preservation verified against the uploaded source material:
+- Nine pad constructors / pins, nine default arrays, and 45 MIDI calls unchanged.
+- The custom hellodrum.cpp and original WavData.h match uploaded SHA-256 hashes.
+- The supplied WAV remains the only populated local sample slot.
+
+New feature checks:
+- All menu-mapped parameter byte values and invalid indices.
+- Sensitivity/threshold, pedal start/end and cymbal edge/cup constraints.
+- Serialization round trip, 840 single-bit corruptions, truncated record lengths,
+  wrong values with recalculated CRC, failed writes and reload behavior.
+- Short press, contact bounce, long-press back without extra SELECT, held button
+  at startup, autorepeat and uint32_t millis rollover.
+- Draft edit/apply/cancel; note changes propagate to MIDI and preserve audio slot;
+  curve changes reach HelloDrum setCurve.
+- Master trim/mute/velocity target behavior and no extra MIDI messages.
+- Save refused during recent playing, active voices, and scheduled tests.
+- An audio runtime fault does not permanently lock the save function.
+- Full sketch is included in the host integration compilation.
+- 20,000 randomized menu events and rectangle bounds at both rotations; repeated
+  unchanged frames do not redraw. GFX/font metrics are MOCKED, not real pixels.
+
+validated:
+- Native ESP32-S3 compilation/linking with the user's local library versions.
+- Actual TFT rendering/font appearance, cable integrity, pin/header exposure,
+  button electrical behavior, strapping/eFuse configuration, or backlight load.
+- ADC timing/polarity/calibration, concurrent core scheduling, SPI/DMA timing,
+  USB MIDI enumeration, latency, cache behavior or drop-free playing.
+- Real NVS power-loss durability; Preferences is RAM-backed in these host tests.
+
+Run the hardware acceptance sequence in README.md before relying on the module
+for playing. Save only while stopped; the firmware is not IRAM-safe for flash writes.
