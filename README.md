@@ -25,7 +25,7 @@ firmware/src/DrumModule.ino
 
 Firmware dependencies include Arduino-ESP32, HelloDrum with the project-specific patch, AudioTools, Adafruit GFX, Adafruit ST7735 and ST7789 Library, and Adafruit BusIO. `Preferences`, `USB`, `USBMIDI`, and `SPI` are provided by Arduino-ESP32.
 
-The exact versions used in the author's installation have not yet been documented. Update the [Build Environment Notes](docs/BUILD_ENVIRONMENT.md) based on a known-working installation rather than assuming the latest versions.
+Update the [Build Environment Notes](docs/BUILD_ENVIRONMENT.md) based on a known-working installation rather than assuming the latest versions.
 
 ## GPIO mapping in the firmware
 
@@ -47,7 +47,7 @@ See the [Firmware Guide](FIRMWARE_GUIDE.md) for notes on power supply, grounding
 
 ## Modified HelloDrum library
 
-`library_patch/hellodrum.cpp` is the modified source file used by this project; it is not the complete library. Back up the existing file, then install this file as `src/hellodrum.cpp` in your active HelloDrum installation, making sure the corresponding headers and supporting files are compatible. If your installation already uses this version of the file, you do not need to replace it again.
+`library_patch/hellodrum.cpp` is the modified source file used by this project; it is not the complete library. Back up the existing file, then install this file as `src/hellodrum.cpp` in your active HelloDrum installation, making sure the corresponding headers and supporting files are compatible.
 
 **Do not copy the patch into the sketch folder while also compiling the same library separately.** Read the [patch instructions](library_patch/README.txt) and [third-party notices](THIRD_PARTY_NOTICES.md).
 
@@ -63,15 +63,13 @@ tools/                WAV PCM16-to-C++-header converter
 docs/                 GitHub guide and build notes
 ```
 
-`tests/stubs` are not a replacement for the original Arduino libraries.
-
 ## Testing
 
 The firmware has been tested on the custom PCB included in this repository. All functions and features have worked as expected during testing.
 
 ## Hardware
 
-The drum kit interface was designed in SolidWorks. The STL files have been tested on a Bambu Lab P1S printer. STEP files are also included for users who want to inspect or modify the design. Check the STEP files for any standard components required in addition to the 3D-printed parts. A bill of materials (BOM) has not been prepared yet.
+The drum kit interface was designed in SolidWorks. The STL files have been tested on a Bambu Lab P1S printer. STEP files are also included for users who want to inspect or modify the design. Check the STEP files for any standard components required in addition to the 3D-printed parts. A bill of materials (BoM) has not been prepared yet.
 
 ## PCB
 
