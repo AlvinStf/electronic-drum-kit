@@ -46,7 +46,7 @@ displaySPI.begin(12, -1, 11, 39); // SCK, MISO, MOSI, CS
 
 ### Perhatian tombol saat boot
 
-GPIO0 dan GPIO45 adalah pin strapping ESP32-S3. Keduanya dipertahankan karena pemetaan itu sudah diuji pengguna, bukan dipilih ulang sebagai rekomendasi umum. Jangan menahan DOWN/GPIO0 ketika power-on/reset/upload normal. Jangan menambahkan pull-up eksternal pada GPIO45 tanpa memeriksa skematik dan konfigurasi VDD_SPI modul. Kode hanya menggunakan `INPUT_PULLUP` setelah startup.
+GPIO0 dan GPIO45 adalah pin strapping ESP32-S3. Keduanya dipertahankan karena pemetaan itu sudah diuji, bukan dipilih ulang sebagai rekomendasi umum. Jangan menahan DOWN/GPIO0 ketika power-on/reset/upload normal. Jangan menambahkan pull-up eksternal pada GPIO45 tanpa memeriksa skematik dan konfigurasi VDD_SPI modul. Kode hanya menggunakan `INPUT_PULLUP` setelah startup.
 
 Apabila perlu menghindari kedua pin tersebut, ubah SELECT dan DOWN ke GPIO lain di `UiConfig.h`, lalu pindahkan kabelnya; pastikan pin pengganti tersedia pada board dan tidak dipakai periferal lain.
 

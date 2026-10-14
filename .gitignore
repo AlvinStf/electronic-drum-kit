@@ -1,0 +1,37 @@
+# Local build output: retain source, sample headers, and test fixtures.
+build/
+.pio/
+.cache/
+*.o
+*.a
+*.elf
+*.bin
+*.hex
+*.map
+*.d
+*.zip
+
+# Python and local editors.
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Local credentials and material not intended for the repository.
+.env
+.env.*
+!.env.example
+secrets.h
+credentials.h
+private_samples/
+
+# WARNING: review web uploads manually. These are Git ignore rules,
+# not access controls and not a guarantee that a browser upload is safe.
+# WavData.h is intentionally included; review its rights before publication.

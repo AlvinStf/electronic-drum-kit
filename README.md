@@ -1,105 +1,82 @@
-# ESP32-S3 Drum Module
+# Electronic Drum Kit
 
-Firmware modul drum elektrik berbasis **ESP32-S3 N16R8**, dengan **USB MIDI**,
-**audio WAV polyphonic melalui PCM5102**, **master volume potensiometer GPIO15**,
-dan **menu setting ST7789**.
+Hardware & Firmware for an electronic drum kit based on the **ESP32-S3 N16R8**, featuring **USB MIDI**, **polyphonic WAV audio playback through a PCM5102 DAC**, a **master-volume potentiometer on GPIO15**, and an **ST7789 settings menu**.
 
-**Baru menggunakan GitHub?** Mulai dari [Panduan GitHub pertama](docs/GITHUB_PERTAMA.md).
-Untuk pemasangan dan penggunaan drum, baca [Panduan firmware](FIRMWARE_GUIDE.md).
+**New to GitHub?** Start with the [GitHub Getting Started Guide](docs/GITHUB_PERTAMA.md). For setup and operation, read the [Firmware Guide](FIRMWARE_GUIDE.md).
 
-## Fitur dalam kode
+## Features
 
-- USB MIDI untuk kick, snare, tiga tom, hihat, pedal, crash, dan ride.
-- Mixer audio 16 suara, dengan keluaran I2S stereo 44.100 Hz.
-- Master volume GPIO15, Master trim, Local audio, dan Audio velocity.
-- Menu ST7789 untuk parameter pad, curve, dan MIDI note.
-- Penyimpanan setting melalui Preferences/NVS, dengan validasi dan CRC.
-- Test kick lokal, serta pengujian logika di komputer menggunakan stub hardware.
+- USB MIDI for kick, snare, three toms, hi-hat, pedal, crash, and ride.
+- A 16-voice audio mixer with 44.1 kHz stereo I2S output.
+- Master Volume (GPIO15), Master Trim, Local Audio, and Audio Velocity settings.
+- An ST7789 menu for pad parameters, curves, and MIDI notes.
+- Settings saved through Preferences/NVS, with validation and CRC checks.
+- A local sound test and host-side logic tests using hardware stubs.
 
-**Sampel bawaan hanya kick.** Zona lain tetap mengirim MIDI, tetapi memerlukan
-WAV sendiri agar berbunyi melalui PCM5102. Audio tidak dibaca dari kartu SD.
-Mengubah MIDI note tidak mengganti sampel WAV.
+WAV samples for each pad are included. The repository also includes a tool to convert WAV files to C arrays and a workflow for replacing the header file to change the sounds played through the PCM5102. Audio is not read from an SD card. Changing a MIDI note does not change the corresponding WAV sample.
 
-## Membuka di Arduino IDE
+## Opening the project in Arduino IDE
 
-Buka berkas berikut, dengan seluruh header tetap berada di folder yang sama:
+Open the following sketch and keep all header files in the same folder:
 
 ```text
-DrumModule/DrumModule.ino
+firmware/src/DrumModule.ino
 ```
-Dependensi firmware: Arduino-ESP32, HelloDrum dengan patch pengguna, AudioTools,
-Adafruit GFX, Adafruit ST7735 and ST7789 Library, dan Adafruit BusIO.
-`Preferences`, `USB`, `USBMIDI`, dan `SPI` digunakan dari Arduino-ESP32.
 
-Versi persis instalasi pengguna belum dicatat. Isi [catatan lingkungan build](docs/BUILD_ENVIRONMENT.md)
-berdasarkan instalasi yang berhasil, bukan dengan mengasumsikan versi terbaru.
+Firmware dependencies include Arduino-ESP32, HelloDrum with the project-specific patch, AudioTools, Adafruit GFX, Adafruit ST7735 and ST7789 Library, and Adafruit BusIO. `Preferences`, `USB`, `USBMIDI`, and `SPI` are provided by Arduino-ESP32.
 
-## Pemetaan GPIO dalam firmware
+The exact versions used in the author's installation have not yet been documented. Update the [Build Environment Notes](docs/BUILD_ENVIRONMENT.md) based on a known-working installation rather than assuming the latest versions.
 
-| Perangkat | Sinyal | GPIO |
-|---|---|---|
+## GPIO mapping in the firmware
+
+| Device | Signal | GPIO |
+|---|---|---:|
 | PCM5102 | BCK / WS / DIN | 42 / 47 / 21 |
-| Potensiometer master | Wiper | 15 |
+| Master potentiometer | Wiper | 15 |
 | ST7789 | SCK / MOSI | 12 / 11 |
 | ST7789 | CS / DC / RST | 39 / 40 / 41 |
-| Tombol | UP / SELECT / DOWN | 48 / 45 / 0 |
+| Buttons | UP / SELECT / DOWN | 0 / 45 / 48 |
 | Kick | Piezo | 10 |
 | Snare | Head / rim | 7 / 8 |
-| Tom | High / hi-mid / floor | 4 / 5 / 6 |
-| Hihat / pedal | Sensor | 1 / 2 |
+| Toms | High / hi-mid / floor | 4 / 5 / 6 |
+| Hi-hat / pedal | Sensor | 1 / 2 |
 | Crash | Piezo / sensor | 3 / 13 |
 | Ride | Piezo / sensor | 9 / 14 |
 
-Ini adalah pemetaan dari source, bukan pengganti skematik rangkaian.
-Perhatikan catatan catu daya, ground, dan pin strapping di [panduan firmware](FIRMWARE_GUIDE.md).
-Matikan daya sebelum mengubah wiring. Pot menggunakan 3V3 dan GND, bukan 5 V.
+See the [Firmware Guide](FIRMWARE_GUIDE.md) for notes on power supply, grounding, and strapping pins. Turn off the power before changing any wiring. Connect the potentiometer to 3V3 and GND, **not 5 V**.
 
-## HelloDrum modifikasi
+## Modified HelloDrum library
 
-`library_patch/hellodrum.cpp` adalah salinan berkas modifikasi yang digunakan
-proyek ini, bukan seluruh library. Cadangkan lalu pasang pada `src/hellodrum.cpp`
-di instalasi HelloDrum yang aktif, menggunakan header dan berkas pendukung yang
-sesuai. Instalasi yang sudah menggunakan berkas ini tidak perlu ditimpa lagi.
+`library_patch/hellodrum.cpp` is the modified source file used by this project; it is not the complete library. Back up the existing file, then install this file as `src/hellodrum.cpp` in your active HelloDrum installation, making sure the corresponding headers and supporting files are compatible. If your installation already uses this version of the file, you do not need to replace it again.
 
-**Jangan menyalin patch ke folder sketch sekaligus mengompilasi library yang sama.**
-Baca [petunjuk patch](library_patch/README.txt) dan [kredit pihak ketiga](THIRD_PARTY_NOTICES.md).
+**Do not copy the patch into the sketch folder while also compiling the same library separately.** Read the [patch instructions](library_patch/README.txt) and [third-party notices](THIRD_PARTY_NOTICES.md).
 
-## Struktur
+## Firmware repository structure
 
 ```text
-DrumMIDI_ST7789/      Sketch utama dan seluruh header firmware
-library_patch/       hellodrum.cpp modifikasi, petunjuk, lisensi upstream
-reference/           Contoh yang menjadi bahan integrasi; bukan sketch utama
-artifacts/           Hasil pemeriksaan pengemasan di komputer
-tests/              Pengujian logika dan stub hardware
-tools/              Konverter WAV PCM16 menjadi header C++
-docs/               Panduan GitHub dan catatan build
+src/                  Main sketch and firmware header files
+library_patch/        Modified hellodrum.cpp, instructions, and upstream license
+reference/            Examples used during integration; not the main sketch
+artifacts/            Results of local packaging checks
+tests/                Logic tests and hardware stubs
+tools/                WAV PCM16-to-C++-header converter
+docs/                 GitHub guide and build notes
 ```
 
-`tests/stubs` bukan pengganti library Arduino asli.
+`tests/stubs` are not a replacement for the original Arduino libraries.
 
-## Pengujian
+## Testing
 
-Pada lingkungan Linux dengan Python 3, Bash, dan g++ yang mendukung sanitizer:
+The firmware has been tested on the custom PCB included in this repository. All functions and features have worked as expected during testing.
 
-```bash
-bash tests/run_tests.sh
-```
+## Hardware
 
-Tes memakai API hardware tiruan. Kelulusan tes bukan bukti timing ADC, DMA,
-USB, tampilan fisik, atau keberhasilan compile dengan library ESP32 lokal.
-[TEST_RESULTS.txt](TEST_RESULTS.txt) adalah laporan dari paket sebelumnya;
-[PACKAGING_REPORT.md](PACKAGING_REPORT.md) mencatat pemeriksaan tahap repository.
+The drum kit interface was designed in SolidWorks. The STL files have been tested on a Bambu Lab P1S printer. STEP files are also included for users who want to inspect or modify the design. Check the STEP files for any standard components required in addition to the 3D-printed parts. A bill of materials (BOM) has not been prepared yet.
 
-Beberapa tes mengunci pemetaan dan hash baseline. Setelah perubahan firmware
-atau sampel yang disengaja, tinjau dan perbarui ekspektasi tes secara sadar.
+## PCB
 
-## Status lisensi dan sampel
+The PCB has been manufactured and tested, and no issues were found during testing. The schematic and EasyEDA project files are included for troubleshooting or modification.
 
-Mulai dengan repository **Private**. Belum ditetapkan lisensi umum untuk seluruh
-proyek. Lisensi upstream HelloDrum MIT dan kredit Ryo Kosaka tetap dipertahankan;
-ketentuan pihak ketiga tidak dihapus oleh status lisensi proyek.
+## License and audio sample status
 
-Asal serta izin distribusi sampel suara belum dicatat. Jangan menganggap
-sampel otomatis bebas dibagikan karena sudah diubah menjadi array C++.
-Baca [LICENSE_STATUS.md](LICENSE_STATUS.md) sebelum publikasi atau distribusi.
+The upstream HelloDrum MIT license and attribution to Ryo Kosaka are retained.

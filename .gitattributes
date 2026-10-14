@@ -1,0 +1,4 @@
+# Preserve byte-for-byte source snapshots and SHA-256 checks across platforms.
+# In particular, the supplied HelloDrum patch and WAV header must not have
+# line endings rewritten automatically by Git on Windows checkout.
+* -text

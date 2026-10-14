@@ -877,12 +877,32 @@ void HelloDrum::FSRSensing(
   //Pedal CC
   fsr = curve(fsr, thre1Raw, sensRaw, curvetype);
 
-  if (fsr < 50)
+  if (fsr < 4)
   {
     fsr = 0;
   }
 
-  else if (fsr >= 50)
+  else if (fsr >= 4 && fsr < 8)
+  {
+    fsr = 25;
+  }
+
+  else if (fsr >= 8 && fsr < 22)
+  {
+    fsr = 50;
+  }
+
+  else if (fsr >= 22 && fsr < 32)
+  {
+    fsr = 75;
+  }
+
+  else if (fsr >= 32 && fsr < 38)
+  {
+    fsr = 100;
+  }
+
+  else if (fsr >= 38)
   {
     fsr = 127;
   }
